@@ -1,0 +1,20 @@
+FROM scratch AS ubuntu_base
+
+ADD ubuntu-base-22.04-base-amd64.tar.gz /
+
+FROM ubuntu_base AS mysql
+
+RUN apt-get update && \
+    apt-get install -y mysql-server
+
+ENV MYSQL_DATABASE=wordpress \
+    MYSQL_ROOT_PASSWORD=wordpress \
+    MYSQL_USER=wordpress \
+    MYSQL_PASSWORD=wordpress
+
+COPY mysqld.cnf /etc/mysql/mysql.conf.d
+RUN service mysql restart
+
+EXPOSE 3306
+
+CMD ["mysqld"]

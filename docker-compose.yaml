@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  wordpress:
+    build: 
+      context: .
+      dockerfile: Dockerfile.wordpress
+    ports:
+      - "80"
+      - "443:443"
+    restart: always
+    depends_on:
+      - db
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    networks:
+      - custom_network
+
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: wordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - custom_network
+
+networks:
+  custom_network:
+    driver: bridge
+
+volumes:
+  db_data:

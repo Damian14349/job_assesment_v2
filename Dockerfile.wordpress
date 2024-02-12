@@ -1,0 +1,39 @@
+FROM scratch AS ubuntu_base
+
+ADD ubuntu-base-22.04-base-amd64.tar.gz /
+
+FROM ubuntu_base AS wordpress
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y php \
+    php-mysql \
+    php-gd \
+    php-curl \
+    apache2 \
+    libapache2-mod-php \
+    curl \
+    openssl
+
+RUN mkdir -p /var/www/html/wordpress \
+    && curl -o wordpress.tar.gz -fSL "https://wordpress.org/latest.tar.gz" \
+    && tar -xzf wordpress.tar.gz -C /var/www/html/wordpress --strip-components=1 \
+    && rm wordpress.tar.gz \
+    && chown -R www-data:www-data /var/www/html/wordpress
+
+RUN a2enmod ssl && \
+    a2enmod rewrite
+
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/ssl/private/localhost.key -out /etc/ssl/certs/localhost.crt \
+    -subj "/C=PL/ST=./L=./O=DamianKurnikIT/OU=./CN=localhost"
+
+COPY wordpress-apache.conf /etc/apache2/sites-available/wordpress.conf
+RUN a2ensite wordpress.conf && a2dissite 000-default.conf
+RUN service apache2 restart
+
+EXPOSE 80
+EXPOSE 443
+
+CMD ["apache2ctl", "-D", "FOREGROUND"]
